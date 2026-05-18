@@ -2,7 +2,7 @@
 
 ## Subtitle
 
-A bilingual career-coaching assistant that helps Romanian-speaking students turn an existing CV and a target job description into a recruiter-ready, LBS-style CV.
+A bilingual career-coaching assistant that helps Romanian-speaking students create or tailor a recruiter-ready, LBS-style CV from an uploaded CV or from scratch through a guided chat.
 
 ## Track
 
@@ -12,7 +12,7 @@ Impact Track: Digital Equity & Inclusivity
 
 Career Navigator addresses a practical equity problem: many talented students and early-career candidates do not have access to premium career coaching, especially in smaller markets or non-native English contexts. The result is not a lack of ability, but a lack of translation between lived experience and recruiter-readable evidence.
 
-The app works like a coach, not a form. A user uploads a PDF or DOCX CV, selects Romanian or English, and pastes a target job description. The assistant extracts what is already present, asks only for genuinely missing evidence, analyzes the profile against the role, and generates a polished `.docx` CV in the selected language.
+The app works like a coach, not a form. A user can upload a PDF or DOCX CV, or build a CV from scratch by answering short coaching questions in Romanian or English. Answers can be typed or spoken using voice input, and the assistant can read responses aloud. It extracts what is already present, asks only for genuinely missing evidence, analyzes the profile against the role, and generates a polished `.docx` CV in the selected language.
 
 ## How Gemma 4 Is Used
 
@@ -39,6 +39,8 @@ The raw uploaded CV is parsed in memory and not retained as a file. The app stor
 ## Product Flow
 
 The user chooses either "I already have a CV" or "Build from scratch." In the upload flow, the app extracts education, experience, projects, skills, languages, and awards. If enough information exists, it does not ask repeated questions. It moves directly to the target job description.
+
+In the scratch flow, the assistant builds the same structured profile through a conversational interview. It asks for education, experience, projects, competencies, languages, and evidence of measurable impact one step at a time. Users can answer by typing or recording their response, which makes the workflow easier for people who are more comfortable speaking than writing. The same profile-completeness logic then decides what is still missing before analysis or CV generation.
 
 Once the job description is pasted, Gemma 4 extracts the role requirements. The user can then analyze the CV or generate a tailored version. The analysis highlights matched and missing role signals, weak evidence, CAR-model improvements, and LBS-style formatting issues. The generated CV is available as `.docx`.
 
