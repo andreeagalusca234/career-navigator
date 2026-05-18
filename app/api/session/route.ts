@@ -26,9 +26,15 @@ export async function POST(request: Request) {
 
   if (body.reset) {
     const locale = normalizeLocale(body.locale ?? session.locale);
-    const nextSession = await resetSession(session.id, locale);
-    await saveEvent(nextSession.id, "reset_session", { previousSessionId: session.id });
-    return NextResponse.json({ session: nextSession });
+    try {
+      const nextSession = await resetSession(session.id, locale);
+      await saveEvent(nextSession.id, "reset_session", { previousSessionId: session.id });
+      return NextResponse.json({ session: nextSession });
+    } catch {
+      await setSessionLocale(session.id, locale);
+      await saveEvent(session.id, "reset_session_fallback", { previousSessionId: session.id });
+      return NextResponse.json({ session: await getOrCreateSession(session.id) });
+    }
   }
 
   if (body.locale) {
