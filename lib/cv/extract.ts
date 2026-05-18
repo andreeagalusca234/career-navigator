@@ -17,6 +17,8 @@ const datePrefixPattern =
 const rolePattern =
   /(head|manager|coordinator|assistant|analyst|analytics|operations|intern|associate|consultant|developer|engineer|specialist|lead|officer|director|founder|chancellor|project leader)/i;
 const bulletPattern = /^\s*(?:[-*\u2022\uF0B7])\s*/;
+const actionLeadPattern =
+  /^(accelerated|achieved|analysed|analyzed|built|conducted|created|delivered|designed|developed|developing|drove|established|evaluated|executed|facilitated|generated|identified|implemented|improved|increased|introduced|led|managed|modelled|modeled|monitored|negotiated|optimised|optimized|oversaw|performed|prepared|prioritised|prioritized|promoted|reduced|redesigned|resolved|restructured|secured|streamlined|supported|tracked|translated)\b/i;
 
 function linesFromText(text: string): string[] {
   return text
@@ -77,7 +79,10 @@ function isDateLine(line: string): boolean {
 }
 
 function splitDatePrefix(line: string): { date: string; rest: string } | null {
-  const match = line.trim().match(datePrefixPattern);
+  const trimmed = line.trim();
+  if (isDateLine(trimmed)) return null;
+
+  const match = trimmed.match(datePrefixPattern);
   const date = match?.groups?.date?.trim();
   const rest = match?.groups?.rest?.trim();
   return date && rest ? { date, rest } : null;
@@ -139,6 +144,18 @@ function isBulletLine(line: string): boolean {
   return bulletPattern.test(line);
 }
 
+function isStandaloneBulletText(line: string): boolean {
+  const trimmed = line.trim();
+  return (
+    actionLeadPattern.test(trimmed) ||
+    /\b(increased|reduced|improved|delivered|driving|cutting|recover|recovered|savings|growth|satisfaction|efficiency|MVP|Streamlit|RAG|AI-powered)\b/i.test(
+      trimmed
+    ) ||
+    /\s[-\u2013\u2014]\s/.test(trimmed) ||
+    /https?:\/\//i.test(trimmed)
+  );
+}
+
 function mergeContinuation(current: string, next: string): string {
   const trimmed = current.trim();
   const prefix = trimmed.endsWith("-") ? trimmed.slice(0, -1) : trimmed;
@@ -154,6 +171,11 @@ function mergeWrappedBullets(lines: string[]): string[] {
 
     if (isBulletLine(trimmed)) {
       bullets.push(trimmed.replace(bulletPattern, "").trim());
+      continue;
+    }
+
+    if (isStandaloneBulletText(trimmed)) {
+      bullets.push(trimmed);
       continue;
     }
 
@@ -253,7 +275,7 @@ function parseAdditional(lines: string[]) {
   const skillLines: string[] = [];
   const languageLines: string[] = [];
   const awardLines: string[] = [];
-  let current: "leadership" | "awards" | "" = "";
+  let current: "leadership" | "awards" | "skills" | "languages" | "" = "";
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -281,14 +303,14 @@ function parseAdditional(lines: string[]) {
     const skillsMatch = trimmed.match(/^(?:Tech Skills|Skills)\s+(.+)$/i);
     if (skillsMatch) {
       skillLines.push(skillsMatch[1]);
-      current = "";
+      current = "skills";
       continue;
     }
 
     const languagesMatch = trimmed.match(/^Languages\s+(.+)$/i);
     if (languagesMatch) {
       languageLines.push(languagesMatch[1]);
-      current = "";
+      current = "languages";
       continue;
     }
 
@@ -297,8 +319,20 @@ function parseAdditional(lines: string[]) {
       continue;
     }
 
+    if (key === "techskills" || key === "skills") {
+      current = "skills";
+      continue;
+    }
+
+    if (key === "languages") {
+      current = "languages";
+      continue;
+    }
+
     if (current === "leadership") leadershipLines.push(trimmed);
     if (current === "awards") awardLines.push(trimmed);
+    if (current === "skills") skillLines.push(trimmed);
+    if (current === "languages") languageLines.push(trimmed);
   }
 
   return {

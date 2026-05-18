@@ -136,8 +136,20 @@ function localizeBulletForCv(value: string, locale: Locale, rawValue?: string): 
       "Definit KPI-uri si cadre operationale scalabile de la zero, crescand eficienta cu 25% si folosind instrumente de IA si automatizare pentru prioritizare si decizii bazate pe date"
     ],
     [
-      /used sql|1,000\+ merchant accounts|recovered.*765k/,
+      /used sql|1,000\+ merchant accounts/,
       "Analizat cu SQL date de plati pentru peste 1.000 de conturi de comercianti, identificand tipare de frauda, pierderi de venit si anomalii comportamentale care au informat decizii de risc si au recuperat aproximativ £765k venit suplimentar"
+    ],
+    [
+      /performed market segmentation across 1,000\+ merchant ids|recovered.*765k/,
+      "Realizat segmentarea pietei pentru peste 1.000 de comercianti, identificand tranzactii subperforme si oportunitati de risc care au sustinut recuperarea a aproximativ GBP 765k venit suplimentar"
+    ],
+    [
+      /conducted bottom-up financial modelling|534k in cost savings/,
+      "Realizat modelare financiara bottom-up si analiza pe scenarii pentru proiecte strategice, identificand aproximativ GBP 534k economii potentiale si sprijinind decizii de investitii"
+    ],
+    [
+      /oversaw global operations for 10 eu markets|regulatory requirements/,
+      "Coordonat operatiuni globale pentru 10 piete din UE, gestionand munca transversala pentru inchideri in regim de urgenta, plati, produse, continut si cerinte de reglementare"
     ],
     [
       /built dashboards|reports tracking key payments|senior stakeholders/,
@@ -236,7 +248,7 @@ function improveProjectBullets(profile: CandidateProfile, jobDescription: JobDes
       ...project,
       bullets: [...project.bullets]
         .sort((a, b) => keywordScore(b.raw, jobDescription) - keywordScore(a.raw, jobDescription))
-        .slice(0, 4)
+        .slice(0, 8)
         .map((bullet) => ({
           ...bullet,
           rewritten: localizeBulletForCv(improveBulletToLbsStyle(bullet.rewritten || bullet.raw), locale, bullet.raw)
@@ -300,6 +312,65 @@ function localizeProfileForCv(profile: CandidateProfile, locale: Locale): Candid
     })),
     awards: profile.awards.map((award) => localizeTextForCv(award, locale) ?? award)
   };
+}
+
+function preserveEvidenceFromBase(generated: CandidateProfile, base: CandidateProfile): CandidateProfile {
+  return CandidateProfileSchema.parse({
+    ...generated,
+    fullName: base.fullName ?? generated.fullName,
+    contact: base.contact,
+    education: base.education.length ? base.education : generated.education,
+    experience: base.experience.map((experience, index) => {
+      const generatedExperience = generated.experience[index];
+
+      return {
+        ...experience,
+        role: generatedExperience?.role || experience.role,
+        bullets: experience.bullets.map((bullet, bulletIndex) => ({
+          ...bullet,
+          rewritten:
+            bullet.rewritten ||
+            generatedExperience?.bullets[bulletIndex]?.rewritten ||
+            generatedExperience?.bullets[bulletIndex]?.raw ||
+            bullet.raw
+        }))
+      };
+    }),
+    projects: base.projects.map((project, index) => {
+      const generatedProject = generated.projects[index];
+
+      return {
+        ...project,
+        bullets: project.bullets.map((bullet, bulletIndex) => ({
+          ...bullet,
+          rewritten:
+            bullet.rewritten ||
+            generatedProject?.bullets[bulletIndex]?.rewritten ||
+            generatedProject?.bullets[bulletIndex]?.raw ||
+            bullet.raw
+        }))
+      };
+    }),
+    leadership: base.leadership.map((item, index) => {
+      const generatedItem = generated.leadership[index];
+
+      return {
+        ...item,
+        bullets: item.bullets.map((bullet, bulletIndex) => ({
+          ...bullet,
+          rewritten:
+            bullet.rewritten ||
+            generatedItem?.bullets[bulletIndex]?.rewritten ||
+            generatedItem?.bullets[bulletIndex]?.raw ||
+            bullet.raw
+        }))
+      };
+    }),
+    skills: base.skills.length ? base.skills : generated.skills,
+    languages: base.languages.length ? base.languages : generated.languages,
+    awards: base.awards.length ? base.awards : generated.awards,
+    completenessScore: calculateCompleteness(base)
+  });
 }
 
 export function generateTailoredCv(
@@ -378,12 +449,7 @@ export async function generateTailoredCvWithGemma(
       })
     });
 
-    const profile = CandidateProfileSchema.parse({
-      ...data,
-      contact: data.contact.email || data.contact.phone || data.contact.linkedin ? data.contact : fallback.profile.contact,
-      fullName: data.fullName ?? fallback.profile.fullName,
-      completenessScore: calculateCompleteness(data)
-    });
+    const profile = preserveEvidenceFromBase(data, fallback.profile);
 
     return {
       tailoredCv: {

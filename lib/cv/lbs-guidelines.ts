@@ -20,6 +20,7 @@ export const lbsActionVerbs = [
   "Implemented",
   "Improved",
   "Increased",
+  "Introduced",
   "Led",
   "Managed",
   "Modelled",
@@ -30,6 +31,7 @@ export const lbsActionVerbs = [
   "Performed",
   "Prepared",
   "Prioritised",
+  "Promoted",
   "Reduced",
   "Redesigned",
   "Resolved",
@@ -37,6 +39,8 @@ export const lbsActionVerbs = [
   "Secured",
   "Streamlined",
   "Supported",
+  "Tracked",
+  "Translated",
   "Transformed"
 ];
 
@@ -76,9 +80,18 @@ function firstWord(value: string): string {
   return value.trim().split(/\s+/)[0]?.replace(/[^A-Za-z]/g, "") ?? "";
 }
 
+function lowerFirstWhenNatural(value: string): string {
+  if (/^[A-Z]{2,}/.test(value)) return value;
+  return value.charAt(0).toLowerCase() + value.slice(1);
+}
+
 export function startsWithActionVerb(bullet: string): boolean {
   const start = firstWord(bullet).toLowerCase();
   return lbsActionVerbs.some((verb) => verb.toLowerCase() === start);
+}
+
+function canonicalActionVerb(value: string): string {
+  return lbsActionVerbs.find((verb) => verb.toLowerCase() === value.toLowerCase()) ?? value;
 }
 
 export function startsWithWeakVerb(bullet: string): boolean {
@@ -130,10 +143,24 @@ export function improveBulletToLbsStyle(rawBullet: string): string {
   const bullet = rawBullet.trim().replace(/\.$/, "");
   if (!bullet) return bullet;
 
+  const titledResult = bullet.match(
+    /^(Student Chancellor of the Faculty of Business|SEntrA Project Leader \(Cyprus\))\s*[-\u2013\u2014]\s*(.+)$/i
+  );
+  if (titledResult) {
+    const title = titledResult[1];
+    const result = titledResult[2];
+    return `${improveBulletToLbsStyle(result)} as ${title}`.replace(/\s+/g, " ").trim();
+  }
+
   const hasStrongStart = startsWithActionVerb(bullet) && !startsWithWeakVerb(bullet);
-  const starter = hasStrongStart ? firstWord(bullet) : pickActionVerbForBullet(bullet);
-  const body = hasStrongStart ? bullet.replace(new RegExp(`^${starter}\\s+`, "i"), "") : bullet;
-  const cleaned = body.charAt(0).toLowerCase() + body.slice(1);
+  const first = firstWord(bullet);
+  const isDeveloping = /^developing$/i.test(first);
+  const starter = hasStrongStart ? canonicalActionVerb(first) : isDeveloping ? "Developed" : pickActionVerbForBullet(bullet);
+  const body =
+    hasStrongStart || isDeveloping
+      ? bullet.replace(new RegExp(`^${first}\\s+`, "i"), "")
+      : bullet;
+  const cleaned = lowerFirstWhenNatural(body);
 
   return `${starter} ${cleaned}`.replace(/\s+/g, " ").trim();
 }
