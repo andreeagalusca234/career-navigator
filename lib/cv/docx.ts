@@ -48,8 +48,8 @@ function runProperties(options: RunOptions = {}): string {
     options.bold ? "<w:b/>" : "",
     options.italic ? "<w:i/>" : "",
     options.color ? `<w:color w:val="${options.color}"/>` : "",
-    `<w:sz w:val="${options.size ?? 16}"/>`,
-    `<w:szCs w:val="${options.size ?? 16}"/>`
+    `<w:sz w:val="${options.size ?? 18}"/>`,
+    `<w:szCs w:val="${options.size ?? 18}"/>`
   ].join("");
 }
 
@@ -71,7 +71,7 @@ function paragraph(children: string[], options: ParagraphOptions = {}): string {
     options.borderBottom
       ? '<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="auto"/></w:pBdr>'
       : "",
-    `<w:spacing w:after="${options.spacingAfter ?? 0}" w:line="${options.line ?? 190}" w:lineRule="auto"/>`,
+    `<w:spacing w:after="${options.spacingAfter ?? 0}" w:line="${options.line ?? 210}" w:lineRule="auto"/>`,
     options.center ? '<w:jc w:val="center"/>' : "",
     options.tabPos ? `<w:tabs><w:tab w:val="left" w:pos="${options.tabPos}"/></w:tabs>` : "",
     options.indentLeft || options.hanging
@@ -84,7 +84,7 @@ function paragraph(children: string[], options: ParagraphOptions = {}): string {
 }
 
 function divider(): string {
-  return paragraph([], { borderBottom: true, line: 80 });
+  return paragraph([], { borderBottom: true, line: 100 });
 }
 
 function sectionTitle(title: string): string {
@@ -243,8 +243,8 @@ function buildBody(tailoredCv: TailoredCv, sectPr: string): string {
   const contact = contactLine(profile);
 
   return [
-    paragraph([run(name, { bold: true, size: 18 })], { center: true, line: 190 }),
-    contact ? paragraph([run(contact, { bold: true })], { center: true, line: 190 }) : "",
+    paragraph([run(name, { bold: true, size: 20 })], { center: true, line: 210 }),
+    contact ? paragraph([run(contact, { bold: true })], { center: true, line: 210 }) : "",
     educationSection(profile, tailoredCv.locale),
     experienceSection(profile, tailoredCv.locale),
     projectSection(profile, tailoredCv.locale),
