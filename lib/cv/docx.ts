@@ -1,11 +1,13 @@
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import JSZip from "jszip";
 import type { CandidateProfile } from "@/lib/cv/schemas";
 import type { TailoredCv } from "@/lib/cv/tailor";
 import { t, type Locale } from "@/lib/i18n";
 
-const outputDir = path.join(process.cwd(), ".generated", "documents");
+const writableRoot = process.env.VERCEL ? os.tmpdir() : process.cwd();
+const outputDir = path.join(writableRoot, ".generated", "documents");
 const templatePath = path.join(process.cwd(), "templates", "lbs_template.docx");
 
 type RunOptions = {

@@ -50,36 +50,51 @@ export async function POST(request: Request) {
   }
 
   await setFlowState(session.id, "GENERATING_CV");
-  const { tailoredCv, model, usedGemma } = await generateTailoredCvWithGemma(
-    session.profile,
-    session.jobDescription,
-    session.locale
-  );
-  const file = await createCvDocx(tailoredCv);
-  const document = await saveGeneratedDocument({
-    sessionId: session.id,
-    id: file.id,
-    fileName: file.fileName,
-    filePath: file.filePath,
-    type: "docx",
-    metadata: {
-      targetRole: tailoredCv.targetRole,
-      targetCompany: tailoredCv.targetCompany,
-      model,
-      usedGemma,
-      docxBase64: file.base64
-    }
-  });
+  try {
+    const { tailoredCv, model, usedGemma } = await generateTailoredCvWithGemma(
+      session.profile,
+      session.jobDescription,
+      session.locale
+    );
+    const file = await createCvDocx(tailoredCv);
+    const document = await saveGeneratedDocument({
+      sessionId: session.id,
+      id: file.id,
+      fileName: file.fileName,
+      filePath: file.filePath,
+      type: "docx",
+      metadata: {
+        targetRole: tailoredCv.targetRole,
+        targetCompany: tailoredCv.targetCompany,
+        model,
+        usedGemma,
+        docxBase64: file.base64
+      }
+    });
 
-  await setFlowState(session.id, "DOWNLOADING");
-  await saveEvent(session.id, "generated_cv", { documentId: document.id, model, usedGemma });
-  await appendMessage(
-    session.id,
-    "assistant",
-    session.locale === "en"
-      ? "Your tailored CV is ready. You can download it as a DOCX or we can revise one section."
-      : "CV-ul tau adaptat este gata. Il poti descarca in format DOCX sau putem revizui o sectiune."
-  );
+    await setFlowState(session.id, "DOWNLOADING");
+    await saveEvent(session.id, "generated_cv", { documentId: document.id, model, usedGemma });
+    await appendMessage(
+      session.id,
+      "assistant",
+      session.locale === "en"
+        ? "Your tailored CV is ready. You can download it as a DOCX or we can revise one section."
+        : "CV-ul tau adaptat este gata. Il poti descarca in format DOCX sau putem revizui o sectiune."
+    );
 
-  return NextResponse.json({ document, session: await getOrCreateSession(session.id) });
+    return NextResponse.json({ document, session: await getOrCreateSession(session.id) });
+  } catch (error) {
+    console.error("generate-cv failed", error);
+    await setFlowState(session.id, "READY_FOR_ACTION");
+
+    return NextResponse.json(
+      {
+        error:
+          session.locale === "en"
+            ? "I could not create the DOCX. Please try again."
+            : "Nu am putut crea documentul DOCX. Te rog incearca din nou."
+      },
+      { status: 500 }
+    );
+  }
 }
