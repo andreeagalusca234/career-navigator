@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id             String              @id @default(cuid())
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  locale         String              @default("ro")
+  flowState      String              @default("ENTRY")
+  profile        CandidateProfile?
+  jobDescription JobDescription?
+  messages       Message[]
+  documents      GeneratedDocument[]
+  events         Event[]
+}
+
+model CandidateProfile {
+  id                String   @id @default(cuid())
+  sessionId         String   @unique
+  session           Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  fullName          String?
+  email             String?
+  phone             String?
+  location          String?
+  linkedin          String?
+  summary           String?
+  education         Json     @default("[]")
+  experience        Json     @default("[]")
+  projects          Json     @default("[]")
+  leadership        Json     @default("[]")
+  skills            Json     @default("[]")
+  languages         Json     @default("[]")
+  awards            Json     @default("[]")
+  completenessScore Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model JobDescription {
+  id                String   @id @default(cuid())
+  sessionId         String   @unique
+  session           Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  rawText           String
+  company           String?
+  roleTitle         String?
+  location          String?
+  seniority         String?
+  requiredSkills    Json     @default("[]")
+  preferredSkills   Json     @default("[]")
+  responsibilities  Json     @default("[]")
+  keywords          Json     @default("[]")
+  recruiterSignals  Json     @default("[]")
+  risks             Json     @default("[]")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      String
+  content   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+model GeneratedDocument {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  type      String
+  fileName  String
+  filePath  String
+  version   Int      @default(1)
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name      String
+  payload   Json?
+  createdAt DateTime @default(now())
+}

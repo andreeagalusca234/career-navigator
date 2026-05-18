@@ -1,0 +1,12 @@
+node_modules
+.next
+.generated
+.env
+*.log
+*.tsbuildinfo
+dev-server.log
+dev-server.err.log
+*.pdf
+*.doc
+*.docx
+!templates/*.docx
